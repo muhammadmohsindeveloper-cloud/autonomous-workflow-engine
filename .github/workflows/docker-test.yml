@@ -12,6 +12,21 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: workflows
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     steps:
 
     - name: Checkout repository
@@ -21,23 +36,24 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Build Docker image
-      run: |
-        docker build -t workflowos .
+      run: docker build -t workflowos .
 
     - name: Run container
       run: |
-        docker run -d -p 8000:8000 --name workflowos-test workflowos
+        docker run -d -p 8000:8000 \
+        -e DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workflows \
+        --name workflowos-test workflowos
 
-    - name: Wait for API to start
+    - name: Wait for API
       run: |
         for i in {1..20}; do
           if curl -s http://localhost:8000/health; then
-            echo "API is up"
+            echo "API started"
             exit 0
           fi
-          echo "Waiting for API..."
+          echo "Waiting..."
           sleep 3
         done
-        echo "API failed to start"
+
         docker logs workflowos-test
         exit 1
