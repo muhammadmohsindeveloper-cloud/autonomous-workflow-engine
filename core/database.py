@@ -1,5 +1,6 @@
 import uuid
 import psycopg2
+from psycopg2.extras import Json
 from core.config import POSTGRES_CONFIG
 
 
@@ -16,9 +17,11 @@ class DatabaseManager:
     # ================= INIT =================
 
     def _init_db(self):
+
         with self._connect() as conn:
             cur = conn.cursor()
 
+            # workers
             cur.execute("""
             CREATE TABLE IF NOT EXISTS workers (
                 id TEXT PRIMARY KEY,
@@ -26,6 +29,7 @@ class DatabaseManager:
             );
             """)
 
+            # jobs
             cur.execute("""
             CREATE TABLE IF NOT EXISTS jobs (
                 id SERIAL PRIMARY KEY,
@@ -45,6 +49,16 @@ class DatabaseManager:
                 max_retries INTEGER DEFAULT 3,
                 timeout INTEGER DEFAULT 30,
                 execution_time INTEGER DEFAULT 0
+            );
+            """)
+
+            # workflows
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS workflows (
+                id SERIAL PRIMARY KEY,
+                name TEXT,
+                definition JSONB,
+                created TIMESTAMP DEFAULT NOW()
             );
             """)
 
@@ -217,7 +231,7 @@ class DatabaseManager:
 
             conn.commit()
 
-    # ================= FAIL + RETRY =================
+    # ================= FAIL =================
 
     def fail_job(self, job_id, error):
 
@@ -240,8 +254,6 @@ class DatabaseManager:
 
             if retries < max_retries:
 
-                self._validate_transition(job_id, "FAILED")
-
                 cur.execute("""
                     UPDATE jobs
                     SET status='PENDING',
@@ -254,8 +266,6 @@ class DatabaseManager:
 
             else:
 
-                self._validate_transition(job_id, "FAILED")
-
                 cur.execute("""
                     UPDATE jobs
                     SET status='FAILED',
@@ -267,47 +277,76 @@ class DatabaseManager:
 
             conn.commit()
 
-    # ================= GET JOB =================
+    # ================= WORKFLOW =================
 
-    def get_job(self, job_id):
-
-        with self._connect() as conn:
-
-            cur = conn.cursor()
-
-            cur.execute(
-                "SELECT * FROM jobs WHERE id=%s",
-                (job_id,)
-            )
-
-            row = cur.fetchone()
-
-            if not row:
-                return None
-
-            columns = [desc[0] for desc in cur.description]
-
-            return dict(zip(columns, row))
-
-    # ================= TIMEOUT =================
-
-    def check_timeouts(self):
+    def create_workflow(self, name, definition):
 
         with self._connect() as conn:
 
             cur = conn.cursor()
 
             cur.execute("""
-                UPDATE jobs
-                SET status='FAILED',
-                    error='Timeout exceeded',
-                    finished=NOW()
-                WHERE status='RUNNING'
-                AND started_at IS NOT NULL
-                AND NOW() > started_at + (timeout * INTERVAL '1 second')
-            """)
+                INSERT INTO workflows (name, definition)
+                VALUES (%s, %s)
+                RETURNING id
+            """, (name, Json(definition)))
+
+            workflow_id = cur.fetchone()[0]
 
             conn.commit()
+
+            return workflow_id
+
+    def list_workflows(self):
+
+        with self._connect() as conn:
+
+            cur = conn.cursor()
+
+            cur.execute("""
+                SELECT id, name, created
+                FROM workflows
+                ORDER BY created DESC
+            """)
+
+            rows = cur.fetchall()
+
+            return [
+                {
+                    "id": r[0],
+                    "name": r[1],
+                    "created": r[2]
+                }
+                for r in rows
+            ]
+
+    # ================= RUN HISTORY =================
+
+    def get_runs(self):
+
+        with self._connect() as conn:
+
+            cur = conn.cursor()
+
+            cur.execute("""
+                SELECT id, plugin, status, created, finished
+                FROM jobs
+                ORDER BY created DESC
+                LIMIT 50
+            """)
+
+            rows = cur.fetchall()
+
+            return [
+                {
+                    "id": r[0],
+                    "plugin": r[1],
+                    "status": r[2],
+                    "created": r[3],
+                    "finished": r[4]
+                }
+                for r in rows
+            ]
 
     # ================= METRICS =================
 

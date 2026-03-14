@@ -1,16 +1,23 @@
 def safe_execute(plugin, data):
     """
-    Basic plugin sandbox security
+    Plugin sandbox security
     """
 
-    allowed_methods = ["execute"]
+    # Plugin must have execute method
+    if not hasattr(plugin, "execute"):
+        raise Exception("Plugin missing execute method")
+
+    # Block dangerous attributes
+    blocked = [
+        "__dict__",
+        "__class__",
+        "__globals__",
+        "__getattribute__",
+    ]
 
     for attr in dir(plugin):
 
-        if attr.startswith("_"):
-            continue
-
-        if attr not in allowed_methods:
+        if attr in blocked:
             raise Exception(
                 f"Unsafe plugin attribute detected: {attr}"
             )

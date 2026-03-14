@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>WorkflowOS</title>
+
+<style>
+
+body{
+background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+font-family: Arial;
+color:white;
+margin:0;
+padding:40px;
+}
+
+h1{
+text-align:center;
+margin-bottom:40px;
+}
+
+.container{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:25px;
+}
+
+.card{
+
+background:rgba(255,255,255,0.1);
+backdrop-filter: blur(10px);
+border-radius:15px;
+padding:20px;
+box-shadow:0 0 20px rgba(0,0,0,0.3);
+transition:0.3s;
+
+}
+
+.card:hover{
+
+transform:translateY(-5px);
+box-shadow:0 0 25px #00eaff;
+
+}
+
+button{
+
+background:#00eaff;
+border:none;
+padding:10px 20px;
+border-radius:8px;
+cursor:pointer;
+margin-top:10px;
+font-weight:bold;
+
+}
+
+button:hover{
+
+background:#00ffd5;
+box-shadow:0 0 10px #00ffd5;
+
+}
+
+input{
+
+padding:10px;
+border-radius:6px;
+border:none;
+width:100%;
+margin-top:10px;
+
+}
+
+pre{
+
+background:rgba(0,0,0,0.4);
+padding:10px;
+border-radius:10px;
+overflow:auto;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<h1>⚡ WorkflowOS Dashboard</h1>
+
+<div class="container">
+
+
+<div class="card">
+
+<h3>Create Workflow</h3>
+
+<input id="workflowName" placeholder="Workflow name">
+
+<button onclick="createWorkflow()">Create</button>
+
+<pre id="createResult"></pre>
+
+</div>
+
+
+<div class="card">
+
+<h3>List Workflows</h3>
+
+<button onclick="loadWorkflows()">Refresh</button>
+
+<pre id="workflowList"></pre>
+
+</div>
+
+
+<div class="card">
+
+<h3>Execution History</h3>
+
+<button onclick="loadRuns()">Refresh</button>
+
+<pre id="runs"></pre>
+
+</div>
+
+
+<div class="card">
+
+<h3>Trigger Webhook</h3>
+
+<input id="workflowId" placeholder="Workflow ID">
+
+<button onclick="trigger()">Trigger</button>
+
+<pre id="triggerResult"></pre>
+
+</div>
+
+
+</div>
+
+
+<script>
+
+const API="http://127.0.0.1:8000"
+
+async function createWorkflow(){
+
+let name=document.getElementById("workflowName").value
+
+let res=await fetch(API+"/workflows",{
+
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+name:name,
+definition:{}
+})
+
+})
+
+let data=await res.json()
+
+document.getElementById("createResult").innerText=
+JSON.stringify(data,null,2)
+
+}
+
+
+async function loadWorkflows(){
+
+let res=await fetch(API+"/workflows")
+
+let data=await res.json()
+
+document.getElementById("workflowList").innerText=
+JSON.stringify(data,null,2)
+
+}
+
+
+async function loadRuns(){
+
+let res=await fetch(API+"/runs")
+
+let data=await res.json()
+
+document.getElementById("runs").innerText=
+JSON.stringify(data,null,2)
+
+}
+
+
+async function trigger(){
+
+let id=document.getElementById("workflowId").value
+
+let res=await fetch(API+"/webhook/"+id,{
+method:"POST"
+})
+
+let data=await res.json()
+
+document.getElementById("triggerResult").innerText=
+JSON.stringify(data,null,2)
+
+}
+
+</script>
+
+</body>
+</html>
