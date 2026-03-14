@@ -1,28 +1,77 @@
 # WorkflowOS
 
-Self-hosted distributed job execution engine.
+Open Source Automation Engine for Developers
+
+WorkflowOS is a distributed automation platform that allows developers to build workflow pipelines, trigger tasks via webhooks, and execute plugins in a scalable environment.
+
+---
 
 ## Features
 
-- PostgreSQL backend
-- Distributed workers
-- Priority scheduling
-- Plugin architecture
-- API key security
-- Docker deployment
+- Workflow DAG Engine
+- Plugin System
+- Webhook Triggers
+- Distributed Workers
+- Job Queue
+- Metrics API
+- Docker Deployment
+- Visual Workflow Builder
 
-## Quick Start
+---
 
-1. Install Docker
-2. Run:
+## Architecture
 
-docker compose up -d
+Client → API → Workflow Engine → Job Queue → Worker → Plugin
 
-3. Open:
+---
+
+## Installation
+
+Clone repository
+
+git clone https://github.com/mohsinakramchandia91-bit/workflowos
+
+cd workflowos
+
+Start with Docker
+
+docker compose up
+
+Open API Docs
 
 http://localhost:8000/docs
 
-## Requirements
+---
 
-Docker 20+
-4GB RAM
+## Example Workflow
+
+Webhook trigger executes plugins:
+
+send_email  
+save_db
+
+---
+
+## API Endpoints
+
+GET /workflows  
+POST /workflows  
+POST /webhook/{workflow_id}  
+GET /runs  
+GET /metrics  
+
+---
+
+## Roadmap
+
+- Visual workflow editor
+- Plugin marketplace
+- Multi-tenant support
+- Cloud deployment
+- Authentication
+
+---
+
+## License
+
+MIT License

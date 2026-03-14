@@ -1,49 +1,22 @@
-version: "3.9"
+version: "3"
 
 services:
-  postgres:
-    image: postgres:16
-    container_name: workflowos_postgres
-    restart: always
-    environment:
-      POSTGRES_DB: workflowos
-      POSTGRES_USER: workflowos
-      POSTGRES_PASSWORD: workflowos
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
 
   api:
     build: .
-    container_name: workflowos_api
-    restart: always
-    depends_on:
-      - postgres
-    environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: workflowos
-      DB_USER: workflowos
-      DB_PASSWORD: workflowos
-      LICENSE_KEY: DEMO-KEY
     ports:
       - "8000:8000"
-
-  worker:
-    build: .
-    container_name: workflowos_worker
-    restart: always
     depends_on:
       - postgres
-    command: ["python", "-m", "app.main", "run-worker"]
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: workflowos
-      DB_USER: workflowos
-      DB_PASSWORD: workflowos
-      LICENSE_KEY: DEMO-KEY
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/workflows
 
-volumes:
-  pgdata:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: workflows
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
