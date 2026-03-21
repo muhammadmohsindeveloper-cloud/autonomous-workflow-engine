@@ -62,6 +62,30 @@ class DatabaseManager:
             );
             """)
 
+            # 🔥 NEW TABLES
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS workflow_runs (
+                id SERIAL PRIMARY KEY,
+                workflow_id INT,
+                status TEXT,
+                input JSONB,
+                output JSONB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            """)
+
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS node_runs (
+                id SERIAL PRIMARY KEY,
+                workflow_run_id INT,
+                node_id INT,
+                status TEXT,
+                input JSONB,
+                output JSONB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            """)
+
             conn.commit()
 
     # ================= STATE MACHINE =================
@@ -155,92 +179,17 @@ class DatabaseManager:
             """, (tenant_id, plugin_name, priority))
 
             job_id = cur.fetchone()[0]
-
             conn.commit()
 
             return job_id
 
-    # ================= CLAIM =================
-
-    def claim_job(self, worker_id):
-
-        conn = self._connect()
-
-        try:
-            conn.autocommit = False
-            cur = conn.cursor()
-
-            cur.execute("""
-                SELECT id
-                FROM jobs
-                WHERE status='PENDING'
-                ORDER BY priority DESC, created ASC
-                FOR UPDATE SKIP LOCKED
-                LIMIT 1
-            """)
-
-            row = cur.fetchone()
-
-            if not row:
-                conn.commit()
-                return None
-
-            job_id = row[0]
-
-            self._validate_transition(job_id, "RUNNING")
-
-            cur.execute("""
-                UPDATE jobs
-                SET status='RUNNING',
-                    worker_id=%s,
-                    started_at=NOW()
-                WHERE id=%s
-            """, (worker_id, job_id))
-
-            conn.commit()
-
-            return job_id
-
-        except Exception as e:
-
-            conn.rollback()
-            raise e
-
-        finally:
-
-            conn.close()
-
-    # ================= COMPLETE =================
-
-    def complete_job(self, job_id, result):
-
-        self._validate_transition(job_id, "COMPLETED")
+    def get_job(self, job_id):
 
         with self._connect() as conn:
-
             cur = conn.cursor()
 
             cur.execute("""
-                UPDATE jobs
-                SET status='COMPLETED',
-                    result=%s,
-                    finished=NOW(),
-                    execution_time=EXTRACT(EPOCH FROM (NOW() - started_at))
-                WHERE id=%s
-            """, (str(result), job_id))
-
-            conn.commit()
-
-    # ================= FAIL =================
-
-    def fail_job(self, job_id, error):
-
-        with self._connect() as conn:
-
-            cur = conn.cursor()
-
-            cur.execute("""
-                SELECT retries, max_retries
+                SELECT id, plugin, status, result, error, created, finished
                 FROM jobs
                 WHERE id=%s
             """, (job_id,))
@@ -248,41 +197,23 @@ class DatabaseManager:
             row = cur.fetchone()
 
             if not row:
-                return
+                return None
 
-            retries, max_retries = row
-
-            if retries < max_retries:
-
-                cur.execute("""
-                    UPDATE jobs
-                    SET status='PENDING',
-                        retries=retries+1,
-                        error=%s,
-                        worker_id=NULL,
-                        started_at=NULL
-                    WHERE id=%s
-                """, (str(error), job_id))
-
-            else:
-
-                cur.execute("""
-                    UPDATE jobs
-                    SET status='FAILED',
-                        error=%s,
-                        finished=NOW(),
-                        execution_time=EXTRACT(EPOCH FROM (NOW() - started_at))
-                    WHERE id=%s
-                """, (str(error), job_id))
-
-            conn.commit()
+            return {
+                "id": row[0],
+                "plugin": row[1],
+                "status": row[2],
+                "result": row[3],
+                "error": row[4],
+                "created": row[5],
+                "finished": row[6]
+            }
 
     # ================= WORKFLOW =================
 
     def create_workflow(self, name, definition):
 
         with self._connect() as conn:
-
             cur = conn.cursor()
 
             cur.execute("""
@@ -292,7 +223,6 @@ class DatabaseManager:
             """, (name, Json(definition)))
 
             workflow_id = cur.fetchone()[0]
-
             conn.commit()
 
             return workflow_id
@@ -300,7 +230,6 @@ class DatabaseManager:
     def list_workflows(self):
 
         with self._connect() as conn:
-
             cur = conn.cursor()
 
             cur.execute("""
@@ -320,40 +249,60 @@ class DatabaseManager:
                 for r in rows
             ]
 
-    # ================= RUN HISTORY =================
+    # ================= WORKFLOW RUN LOGS =================
 
-    def get_runs(self):
+    def create_workflow_run(self, workflow_id, input_data):
 
         with self._connect() as conn:
-
             cur = conn.cursor()
 
             cur.execute("""
-                SELECT id, plugin, status, created, finished
-                FROM jobs
-                ORDER BY created DESC
-                LIMIT 50
-            """)
+                INSERT INTO workflow_runs (workflow_id, status, input)
+                VALUES (%s, %s, %s)
+                RETURNING id
+            """, (workflow_id, "running", Json(input_data)))
 
-            rows = cur.fetchall()
+            run_id = cur.fetchone()[0]
+            conn.commit()
 
-            return [
-                {
-                    "id": r[0],
-                    "plugin": r[1],
-                    "status": r[2],
-                    "created": r[3],
-                    "finished": r[4]
-                }
-                for r in rows
-            ]
+            return run_id
+
+    def update_workflow_run(self, run_id, status, output):
+
+        with self._connect() as conn:
+            cur = conn.cursor()
+
+            cur.execute("""
+                UPDATE workflow_runs
+                SET status=%s, output=%s
+                WHERE id=%s
+            """, (status, Json(output), run_id))
+
+            conn.commit()
+
+    def create_node_run(self, workflow_run_id, node_id, status, input_data, output):
+
+        with self._connect() as conn:
+            cur = conn.cursor()
+
+            cur.execute("""
+                INSERT INTO node_runs (workflow_run_id, node_id, status, input, output)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (
+                workflow_run_id,
+                node_id,
+                status,
+                Json(input_data),
+                Json(output)
+            ))
+
+            conn.commit()
 
     # ================= METRICS =================
 
     def get_metrics(self):
 
         with self._connect() as conn:
-
             cur = conn.cursor()
 
             cur.execute("SELECT COUNT(*) FROM jobs")

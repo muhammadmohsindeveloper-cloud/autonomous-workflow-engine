@@ -2,11 +2,9 @@
 <html>
 
 <head>
-
 <title>WorkflowOS Builder</title>
 
 <style>
-
 body{
 margin:0;
 font-family:Arial;
@@ -14,8 +12,6 @@ background:linear-gradient(135deg,#020617,#0f172a);
 color:white;
 overflow:hidden;
 }
-
-/* TOP BAR */
 
 .topbar{
 display:flex;
@@ -36,31 +32,30 @@ margin-right:10px;
 transition:0.2s;
 }
 
-button:hover{
-transform:scale(1.08);
-}
+button:hover{transform:scale(1.08);}
 
-/* BUTTON COLORS */
-
-.save{
-background:#22c55e;
-box-shadow:0 0 10px #22c55e;
-}
-
-.run{
-background:#3b82f6;
-color:white;
-box-shadow:0 0 10px #3b82f6;
-}
-
-/* WORKSPACE */
+.save{background:#22c55e;box-shadow:0 0 10px #22c55e;}
+.run{background:#3b82f6;color:white;box-shadow:0 0 10px #3b82f6;}
+.ai{background:#a855f7;color:white;box-shadow:0 0 15px #a855f7;}
 
 .workspace{
 position:relative;
 height:90vh;
 }
 
-/* CONNECTION LAYER */
+#marketplace{
+position:absolute;
+right:0;
+top:80px;
+width:300px;
+height:100%;
+background:rgba(0,0,0,0.6);
+backdrop-filter:blur(10px);
+padding:15px;
+overflow:auto;
+z-index:10;
+border-left:1px solid rgba(255,255,255,0.1);
+}
 
 #connections{
 position:absolute;
@@ -69,68 +64,47 @@ height:100%;
 pointer-events:none;
 }
 
-/* NODE STYLE */
-
 .node{
-
 position:absolute;
 padding:15px 20px;
 border-radius:12px;
-
 background:rgba(255,255,255,0.05);
 backdrop-filter:blur(8px);
-
 cursor:pointer;
-
 box-shadow:0 0 10px rgba(0,0,0,0.5);
-
 transition:0.2s;
-
 }
 
 .node:hover{
-
 transform:scale(1.08);
 box-shadow:0 0 15px #22c55e;
-
 }
 
-.node.running{
-box-shadow:0 0 20px #facc15;
-}
-
-.node.done{
-box-shadow:0 0 20px #22c55e;
-}
-
+.node.running{box-shadow:0 0 20px #facc15;}
+.node.done{box-shadow:0 0 20px #22c55e;}
 </style>
-
 </head>
 
 <body>
 
 <div class="topbar">
-
-<div id="pluginButtons">
-
-<button onclick="addNode('send_email')">Email Node</button>
-<button onclick="addNode('save_db')">DB Node</button>
-
-</div>
+<div id="pluginButtons"></div>
 
 <div>
-
+<button class="ai" onclick="runAI()">🤖 AI</button>
 <button class="save" onclick="saveWorkflow()">Save</button>
 <button class="run" onclick="runWorkflow()">Run</button>
-
+<button onclick="loadTemplates()">📦 Templates</button>
 </div>
-
 </div>
 
 <div class="workspace" id="workspace">
-
 <svg id="connections"></svg>
+</div>
 
+<div id="marketplace">
+<h3>🧩 Marketplace</h3>
+<div id="pluginList"></div>
 </div>
 
 <script>
@@ -140,222 +114,257 @@ let edges=[]
 let nodeCount=0
 let selectedNode=null
 
-/* ADD NODE */
-
+/* 🔥 ADD NODE (UPDATED) */
 function addNode(type){
+
+let extra = {}
+
+if(type === "http_request"){
+let url = prompt("Enter API URL")
+if(!url){
+alert("URL required")
+return
+}
+extra.url = url
+extra.method = "GET"
+}
 
 nodeCount++
 
 let node={
 id:nodeCount,
 type:type,
-x:120+nodeCount*30,
-y:120+nodeCount*20
+data:extra,
+x:120+nodeCount*40,
+y:120+nodeCount*25
 }
 
 nodes.push(node)
-
 render()
-
 }
 
 /* RENDER */
-
 function render(){
-
 const workspace=document.getElementById("workspace")
-
 workspace.querySelectorAll(".node").forEach(n=>n.remove())
 
 nodes.forEach(node=>{
-
 const div=document.createElement("div")
-
 div.className="node"
 div.id="node-"+node.id
-
 div.style.left=node.x+"px"
 div.style.top=node.y+"px"
-
 div.innerText=node.type+" #"+node.id
-
 div.onclick=()=>selectNode(node.id)
-
 workspace.appendChild(div)
-
 })
 
 renderEdges()
-
 }
 
-/* SELECT NODE FOR CONNECTION */
-
+/* CONNECTION */
 function selectNode(id){
-
-if(selectedNode==null){
-
-selectedNode=id
-return
-
-}
-
+if(selectedNode==null){selectedNode=id;return}
 if(selectedNode!=id){
-
-edges.push({
-from:selectedNode,
-to:id
-})
-
+edges.push({from:selectedNode,to:id})
 selectedNode=null
-
 renderEdges()
-
+}
 }
 
-}
-
-/* DRAW EDGES */
-
+/* DRAW */
 function renderEdges(){
-
 const svg=document.getElementById("connections")
-
 svg.innerHTML=""
 
 edges.forEach(edge=>{
-
 const n1=nodes.find(n=>n.id===edge.from)
 const n2=nodes.find(n=>n.id===edge.to)
+if(!n1 || !n2) return
 
-const line=document.createElementNS(
-"http://www.w3.org/2000/svg",
-"line"
-)
-
-line.setAttribute("x1",n1.x+50)
-line.setAttribute("y1",n1.y+20)
-
-line.setAttribute("x2",n2.x+50)
-line.setAttribute("y2",n2.y+20)
-
+const line=document.createElementNS("http://www.w3.org/2000/svg","line")
+line.setAttribute("x1",n1.x+60)
+line.setAttribute("y1",n1.y+25)
+line.setAttribute("x2",n2.x+60)
+line.setAttribute("y2",n2.y+25)
 line.setAttribute("stroke","#22c55e")
 line.setAttribute("stroke-width","3")
-
 svg.appendChild(line)
-
 })
-
 }
 
-/* SAVE WORKFLOW */
-
+/* SAVE */
 async function saveWorkflow(){
-
-const workflow={
-nodes:nodes,
-edges:edges
-}
+const workflow={nodes,edges}
 
 const res=await fetch("http://127.0.0.1:8000/workflows",{
-
 method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
+headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
 name:"builder workflow",
 definition:workflow
 })
-
 })
 
 const data=await res.json()
-
-alert("Workflow Saved ID: "+data.id)
-
+localStorage.setItem("workflowId", data.id)
+alert("Saved ID: "+data.id)
 }
 
-/* EXECUTION ANIMATION */
+/* RUN */
+async function runWorkflow(){
+let id = localStorage.getItem("workflowId")
 
+if(!id){
+id = prompt("Enter Workflow ID")
+if(!id) return
+}
+
+const res = await fetch("http://127.0.0.1:8000/webhook/"+id,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({})
+})
+
+await res.json()
+animateExecution()
+}
+
+/* ANIMATION */
 function animateExecution(){
-
 nodes.forEach((node,i)=>{
-
 setTimeout(()=>{
-
 let el=document.getElementById("node-"+node.id)
-
 el.classList.add("running")
-
 setTimeout(()=>{
-
 el.classList.remove("running")
 el.classList.add("done")
+},600)
+},i*800)
+})
+}
 
-},700)
+/* 🤖 AI FIXED */
+async function runAI(){
 
-},i*1000)
+let promptText = prompt("Describe your workflow")
+if(!promptText) return
 
+const res = await fetch("http://127.0.0.1:8000/ai/execute",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({prompt:promptText})
+})
+
+const data = await res.json()
+
+nodes=[]
+edges=[]
+nodeCount=0
+
+if(data.plan && data.plan.steps){
+
+data.plan.steps.forEach((step,i)=>{
+nodeCount++
+
+let node={
+id:nodeCount,
+type:step,
+data:{},
+x:150+i*180,
+y:200
+}
+
+nodes.push(node)
+
+if(i>0){
+edges.push({from:nodeCount-1,to:nodeCount})
+}
 })
 
 }
 
-/* RUN WORKFLOW */
-
-async function runWorkflow(){
-
-let id=prompt("Enter Workflow ID")
-
-const res=await fetch(
-"http://127.0.0.1:8000/webhook/"+id,
-{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({})
-}
-)
-
-const data=await res.json()
-
-console.log(data)
-
-animateExecution()
-
+render()
+localStorage.setItem("workflowId", data.workflow_id)
+alert("AI Workflow Ready 🚀 ID: "+data.workflow_id)
 }
 
-/* LOAD PLUGINS FROM API */
-
+/* PLUGINS */
 async function loadPlugins(){
-
 const res=await fetch("http://127.0.0.1:8000/plugins")
-
 const data=await res.json()
 
 const container=document.getElementById("pluginButtons")
 
 data.plugins.forEach(p=>{
-
 const btn=document.createElement("button")
-
 btn.innerText=p.name
-
 btn.onclick=()=>addNode(p.name)
-
 container.appendChild(btn)
-
 })
-
 }
 
+/* MARKETPLACE */
+async function loadMarketplace(){
+const res = await fetch("http://127.0.0.1:8000/plugins")
+const data = await res.json()
+
+const container = document.getElementById("pluginList")
+container.innerHTML=""
+
+data.plugins.forEach(p=>{
+const div=document.createElement("div")
+
+div.style.padding="10px"
+div.style.marginBottom="10px"
+div.style.borderRadius="10px"
+div.style.background="rgba(255,255,255,0.05)"
+div.style.cursor="pointer"
+
+div.innerHTML = `
+<strong>${p.icon} ${p.name}</strong><br>
+<small>${p.description}</small>
+`
+
+div.onclick=()=>addNode(p.name)
+container.appendChild(div)
+})
+}
+
+/* TEMPLATES FIX */
+async function loadTemplates(){
+
+const res = await fetch("http://127.0.0.1:8000/templates")
+const data = await res.json()
+
+if(!data.templates || data.templates.length===0){
+alert("No templates found")
+return
+}
+
+let names = data.templates.map(t => t.name).join("\n")
+let choice = prompt("Templates:\n"+names)
+
+let selected = data.templates.find(t => t.name === choice)
+if(!selected){alert("Invalid choice");return}
+
+nodes = (selected.nodes || []).map(n=>({
+...n,
+data:n.data || {}
+}))
+
+edges = selected.edges || []
+nodeCount = nodes.length
+
+render()
+alert("Template Loaded 🚀")
+}
+
+/* INIT */
 loadPlugins()
+loadMarketplace()
 
 </script>
 
 </body>
-
 </html>

@@ -1,0 +1,28 @@
+{
+  "plugins": [
+    {
+      "name": "send_email",
+      "description": "Send email notification",
+      "category": "communication",
+      "icon": "📧"
+    },
+    {
+      "name": "save_db",
+      "description": "Save data to database",
+      "category": "database",
+      "icon": "💾"
+    },
+    {
+      "name": "http_request",
+      "description": "Call external APIs",
+      "category": "integration",
+      "icon": "🌐"
+    },
+    {
+      "name": "webhook",
+      "description": "Trigger workflow via webhook",
+      "category": "core",
+      "icon": "🔗"
+    }
+  ]
+}

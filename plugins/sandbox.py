@@ -3,23 +3,20 @@ def safe_execute(plugin, data):
     Plugin sandbox security
     """
 
-    # Plugin must have execute method
-    if not hasattr(plugin, "execute"):
-        raise Exception("Plugin missing execute method")
+    # ✅ must have run()
+    if not hasattr(plugin, "run"):
+        raise Exception("Plugin missing run() function")
 
-    # Block dangerous attributes
+    # ⚠️ IMPORTANT FIX:
+    # __dict__ remove kar diya (warna har plugin block ho jata hai)
     blocked = [
-        "__dict__",
-        "__class__",
         "__globals__",
         "__getattribute__",
     ]
 
     for attr in dir(plugin):
-
         if attr in blocked:
-            raise Exception(
-                f"Unsafe plugin attribute detected: {attr}"
-            )
+            raise Exception(f"Unsafe plugin attribute detected: {attr}")
 
-    return plugin.execute(data)
+    # ✅ execute plugin
+    return plugin.run(data)

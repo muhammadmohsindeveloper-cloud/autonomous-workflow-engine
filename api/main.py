@@ -5,9 +5,13 @@ from api.routes import router
 from api.webhooks import router as webhook_router
 from api.workflows import router as workflow_router
 from api.runs import router as runs_router
+from api.plugins import router as plugin_router
 
 from core.database import DatabaseManager
 from core.logger import get_logger
+from api.ai import router as ai_router
+from api.plugins import router as plugin_router
+from api.templates import router as templates_router
 
 
 # ---------------------------
@@ -50,6 +54,10 @@ app.include_router(router)
 app.include_router(webhook_router)
 app.include_router(workflow_router)
 app.include_router(runs_router)
+app.include_router(plugin_router)
+app.include_router(ai_router)
+app.include_router(plugin_router)
+app.include_router(templates_router)
 
 
 # ---------------------------
