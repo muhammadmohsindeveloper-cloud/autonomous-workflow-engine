@@ -13,21 +13,19 @@
   <img src="https://img.shields.io/github/stars/muhammadmohsindeveloper-cloud/autonomous-workflow-engine?style=for-the-badge"/>
   <img src="https://img.shields.io/github/forks/muhammadmohsindeveloper-cloud/autonomous-workflow-engine?style=for-the-badge"/>
   <img src="https://img.shields.io/github/issues/muhammadmohsindeveloper-cloud/autonomous-workflow-engine?style=for-the-badge"/>
-  <img src="https://img.shields.io/github/license/muhammadmohsindeveloper-cloud/autonomous-workflow-engine?style=for-the-badge"/>
 </p><p align="center">
   <img src="https://img.shields.io/badge/AI-Native-black?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/Automation-Engine-blue?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/System-Design-red?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/Architecture-Scalable-green?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/Backend-FastAPI-orange?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Status-Active%20Development-yellow?style=for-the-badge"/>
 </p><p align="center">
   <b>⚡ Building next-generation AI-powered workflow systems beyond traditional automation tools</b>
 </p>---
 
 🧠 What is WorkflowOS?
 
-Autonomous Workflow Engine (WorkflowOS) is a next-generation, AI-native workflow automation platform designed to compete with tools like n8n — built with a system-first and scalable architecture mindset.
+Autonomous Workflow Engine (WorkflowOS) is a next-generation, AI-native workflow automation platform designed to compete with tools like n8n, built with a system-first and scalable architecture mindset.
 
 It enables developers to:
 
@@ -37,6 +35,12 @@ It enables developers to:
 - Integrate APIs, webhooks & AI logic
 
 «💡 This is not just automation — this is intelligent orchestration infrastructure»
+
+---
+
+🚀 Demo / Preview
+
+"Preview" (https://raw.githubusercontent.com/muhammadmohsindeveloper-cloud/autonomous-workflow-engine/main/screenshots/banner.png)
 
 ---
 
@@ -164,14 +168,6 @@ Endpoint| Description
 "/plugins"| List plugins
 "/health"| System health
 "/metrics"| Monitoring
-
----
-
-📸 Visual Preview (Coming Soon)
-
-- Workflow execution UI
-- Automation pipeline demo
-- Architecture visualization
 
 ---
 
