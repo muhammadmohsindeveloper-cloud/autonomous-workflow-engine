@@ -44,6 +44,18 @@ It enables developers to:
 
 ---
 
+🏗️ Architecture Diagram
+
+flowchart TD
+    A[User / API / Webhook] --> B[Trigger System]
+    B --> C[Workflow Engine]
+    C --> D[Node Processor]
+    D --> E[Plugin System]
+    E --> F[Execution Layer]
+    F --> G[Logs & Output]
+
+---
+
 🏆 GitHub Analytics
 
 <p align="center">
@@ -94,49 +106,6 @@ It enables developers to:
 </td>
 </tr>
 </table>---
-
-🏗️ High-Level Architecture
-
-Trigger Layer (API/Webhooks)
-        ↓
-Workflow Engine (Orchestrator)
-        ↓
-Node Processor (Execution Flow)
-        ↓
-Plugin System (Dynamic Modules)
-        ↓
-Output + Logs + Metrics
-
----
-
-🧬 Project Structure
-
-workflowos/
-│
-├── api/           # FastAPI routes
-├── engine/        # Core workflow engine
-├── plugins/       # Plugin system
-├── core/          # Utilities & logic
-├── app/           # Orchestration layer
-├── dashboard/     # UI (future)
-├── templates/     # Prebuilt workflows
-├── agent/         # AI agents (future)
-├── marketplace/   # Plugin marketplace (future)
-
----
-
-🔌 Plugin Interface
-
-def run(data: dict):
-    return {"status": "success"}
-
-Example Plugins
-
-- http_request
-- save_db
-- send_email
-
----
 
 ⚙️ Execution Flow
 
