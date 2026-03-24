@@ -1,6 +1,8 @@
-"Banner" (./screenshots/banner.png)
+"Banner" (https://raw.githubusercontent.com/muhammadmohsindeveloper-cloud/autonomous-workflow-engine/main/screenshots/banner.png)
 
-<p align="center"><b>⚡ AI-Powered Workflow Automation Engine • Built for Scale</b></p>---
+<p align="center">
+  <b>⚡ AI-Powered Workflow Automation Engine • Built for Scale</b>
+</p>---
 
 🚀 Autonomous Workflow Engine (WorkflowOS)
 
